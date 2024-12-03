@@ -1,0 +1,161 @@
+---
+title: "Quarto example: `r params$project`"
+author: "Vito"
+format: 
+  html:
+    toc: true       # Table of Contents for easier navigation
+    code-fold: true # Allows folding of code blocks for cleaner report view
+    code-tools: true # Adds buttons to hide/show code
+params:
+  input_txt: '../results/test.txt'
+  output_txt: '../results/test_copy.txt'
+  project: 'Test'
+  renv: NULL
+---
+
+
+# Introduction
+
+Provide an introduction to your analysis here. You may include the purpose of the exploratory analysis, the dataset, and any specific questions you aim to address.
+
+# Data Loading
+
+```{r}
+#| label: load-packages
+#| message: false
+# Load necessary libraries
+library(tidyverse)
+```
+
+```{r}
+#| label: load-data
+data <- read_csv("../data/processed_data.csv")
+
+# Display a summary of the dataset
+summary(data)
+
+# Check the structure of the dataset
+str(data)
+
+#| label: check-missing-values
+# Count missing values in each column
+data %>% summarise(across(everything(), ~ sum(is.na(.))))
+
+#| label: visual-exploration
+# Plot a histogram of a continuous variable (adjust for your dataset)
+ggplot(data, aes(x = continuous_variable)) +
+  geom_histogram(binwidth = 10, fill = "blue", color = "white") +
+  labs(title = "Histogram of Continuous Variable", x = "Value", y = "Frequency")
+
+#| label: scatterplot
+# Example scatter plot between two continuous variables
+ggplot(data, aes(x = variable_x, y = variable_y)) +
+  geom_point() +
+  labs(title = "Scatterplot of X vs Y", x = "X Variable", y = "Y Variable")
+
+
+
+```
+
+# Output
+
+This section provides an analysis of xxx data. The purpose of this template is to provide an example of the data analysis output.
+
+# Data Loading
+
+```
+library(dplyr)
+library(gtsummary)
+library(modelsummary)
+library(estimatr)
+library(ggplot2)
+library(broom)
+library(readr)
+
+# Load your dataset (adjust the file path accordingly)
+data <- read_csv("../data/health_insurance_data.csv")
+
+str(data)
+
+```
+
+
+# Descriptive analysis
+
+```
+# Subset and select health insurance characteristics
+insurance_data <- data %>%
+  distinct(policy_id, .keep_all = TRUE) %>%
+  select(gender, age_group, insurance_type, premium_paid)
+
+# Summary statistics for health insurance data
+insurance_summary <- insurance_data %>%
+  tbl_summary(
+    missing = "no",
+    type = list(
+      gender ~ "dichotomous",
+      age_group ~ "categorical",
+      insurance_type ~ "categorical"
+    ),
+    statistic = list(
+      all_dichotomous() ~ "{p}%",
+      all_categorical() ~ "{n} ({p}%)",
+      premium_paid ~ "{mean} ({sd})"
+    ),
+    digits = list(
+      all_dichotomous() ~ 1,
+      all_categorical() ~ 1,
+      premium_paid ~ 2
+    ),
+    label = list(
+      gender ~ "Gender",
+      age_group ~ "Age Group",
+      insurance_type ~ "Insurance Type",
+      premium_paid ~ "Premium Paid (in USD)"
+    )
+  ) %>%
+  add_ci(include = everything(), pattern = "{stat} ({ci})") %>%
+  modify_footnote(all_stat_cols() ~ "Notes: Proportion for categorical variables, mean (SD) for continuous variables.") 
+
+# Display the summary table
+insurance_summary
+
+```
+
+# t-test
+```
+# Conduct t-tests for premium_paid by insurance_type
+t_test_results <- insurance_data %>%
+  group_by(insurance_type) %>%
+  summarise(
+    t_test_premium = t.test(premium_paid ~ insurance_type)$p.value
+  )
+
+# Display t-test results
+t_test_results
+```
+
+# Regression
+
+```
+# Fit a linear model (adjust variables as necessary)
+model <- lm(premium_paid ~ gender + age_group + insurance_type, data = insurance_data)
+
+# Summary of the regression model
+summary(model)
+
+# Display regression table with coefficients and significance
+modelsummary(model, output = "markdown")
+```
+# Coefficients Plot
+```
+# Tidy the model for plotting
+tidy_model <- broom::tidy(model)
+
+# Plot the regression coefficients
+ggplot(tidy_model, aes(x = estimate, y = term)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = estimate - std.error, xmax = estimate + std.error), height = 0.2) +
+  labs(title = "Coefficient Plot", x = "Estimate", y = "Variable") +
+  theme_minimal()
+```
